@@ -2,6 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+// ==== Liam's attempt to mark up this file. Pray for me! ====
 package frc.robot.Subsystems;
 //test commit
 import java.util.Optional;
@@ -15,7 +16,6 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-
 
 import edu.wpi.first.math.VecBuilder;
 
@@ -36,39 +36,33 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 
+// Class declaration
 public class Swerve extends SubsystemBase {
+  
+  // Class variables
+  public Vision photonVision = new Vision();
   private final AHRS m_gyro;
-
+  public Field2d field;
   private SwerveModule[] mSwerveMods;
   private SwerveDrivePoseEstimator swerveOdometry;
-  public Field2d field;
   public RobotConfig config;
-
-  public Vision photonVision = new Vision();
-
-
+  
+  // Class constructor passing variable v
   public Swerve(Vision v) {
+
+    // Class variable getting assigned values
     this.photonVision = v;
-    m_gyro = new AHRS(NavXComType.kMXP_SPI); // Check to make sure SPI switch is flicked "ON" on the NavX 
-    // .configFactoryDefault();
-    zeroHeading();
+    m_gyro = new AHRS(NavXComType.kMXP_SPI); // Check to make sure SPI switch is flicked "ON" on the NavX
+    field = new Field2d();
     mSwerveMods = new SwerveModule[] {
-        new SwerveModule(0, Constants.Swerve.Mod0.constants),
+        new SwerveModule(0, Constants.Swerve.Mod0.constants), // Module values pulled from out own Constants file
         new SwerveModule(1, Constants.Swerve.Mod1.constants),
         new SwerveModule(2, Constants.Swerve.Mod2.constants),
         new SwerveModule(3, Constants.Swerve.Mod3.constants)
     };
-
-    Timer.delay(1.0);
-    resetModulesToAbsolute();
-
-    field = new Field2d();
-
-    var stateStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
-    var visionStdDevs = VecBuilder.fill(0.01, 0.01, Units.degreesToRadians(10));
-    // info on how to set up the SwerveDrivePoseEstimator can be found here: file:///C:/Users/Public/wpilib/2025/documentation/java/edu/wpi/first/math/estimator/SwerveDrivePoseEstimator.html
-
-    swerveOdometry = new SwerveDrivePoseEstimator(// FROM CLASS SwerveDrivePoseEstimator DAN_F
+    // FROM CLASS SwerveDrivePoseEstimator DAN_F
+    swerveOdometry = new SwerveDrivePoseEstimator(
+        // The formating looks strange, but these are being passed as attributes for the assignment of swerveOdometry
         Constants.Swerve.swerveKinematics,
         getRotation2d(),
         getModulePositions(),
@@ -76,37 +70,49 @@ public class Swerve extends SubsystemBase {
         stateStdDevs,
         visionStdDevs);
 
+    // Methods that are run every time and object is created, NOT VARIABLES!!!!!
+    zeroHeading();
+    Timer.delay(1.0);
+    resetModulesToAbsolute();
     SmartDashboard.putData("Field", field);
+    // .configFactoryDefault();    Sets somthing to the factory default, not sure what?
+    
+    // These variables are being taken from the swerveOdometry assignment statment above, but I don't know what they do
+    var stateStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
+    var visionStdDevs = VecBuilder.fill(0.01, 0.01, Units.degreesToRadians(10));
+    // info on how to set up the SwerveDrivePoseEstimator can be found here: file:///C:/Users/Public/wpilib/2025/documentation/java/edu/wpi/first/math/estimator/SwerveDrivePoseEstimator.html
 
-    // AutoBuilder.configureHolonomic(//FROM CLASS AUTOBUILDER DAN_F
-    // this::getPose, // Robot pose supplier
-    // this::resetPose, // Method to reset odometry (will be called if your auto has
-    // a starting pose)
-    // this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT
-    // RELATIVE
-    // this::driveRobotRelative, // Method that will drive the robot given ROBOT
-    // RELATIVE ChassisSpeeds
-    // new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should
-    // likely live in your Constants class
-    // new PIDConstants(Constants.Swerve.driveKP, Constants.Swerve.driveKI,
-    // Constants.Swerve.driveKD), // Translation PID constants
-    // new PIDConstants(5, Constants.Swerve.angleKI, Constants.Swerve.angleKD), //
-    // Rotation PID constants
-    // 4, // Max module speed, in m/s
-    // 0.4, // Drive base radius in meters. Distance from robot center to furthest
-    // module.
-    // new ReplanningConfig() //NO DECLARATION DAN_F Default path replanning config.
-    // See the API for the options here
-    // ),
-    // () -> {
-    // // Boolean supplier that controls when the path will be mirrored for the red
-    // alliance
-    // // This will flip the path being followed to the red side of the field.
-    // // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-   
-    // Load the RobotConfig from the GUI settings. You should probably store this in your Constants file
+    // This was here before, not going to bother trying to understand it
+    /*
+    AutoBuilder.configureHolonomic(//FROM CLASS AUTOBUILDER DAN_F
+    this::getPose, // Robot pose supplier
+    this::resetPose, // Method to reset odometry (will be called if your auto has
+    a starting pose)
+    this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT
+    RELATIVE
+    this::driveRobotRelative, // Method that will drive the robot given ROBOT
+    RELATIVE ChassisSpeeds
+    new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should
+    likely live in your Constants class
+    new PIDConstants(Constants.Swerve.driveKP, Constants.Swerve.driveKI,
+    Constants.Swerve.driveKD), // Translation PID constants
+    new PIDConstants(5, Constants.Swerve.angleKI, Constants.Swerve.angleKD), //
+    Rotation PID constants
+    4, // Max module speed, in m/s
+    0.4, // Drive base radius in meters. Distance from robot center to furthest
+    module.
+    new ReplanningConfig() //NO DECLARATION DAN_F Default path replanning config.
+    /ee the API for the options here
+    ),
+    () -> {
+    // Boolean supplier that controls when the path will be mirrored for the red
+    alliance
+    // This will flip the path being followed to the red side of the field.
+    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    Load the RobotConfig from the GUI settings. You should probably store this in your Constants file
+    */
 
-
+    // This is weird, but I think it tests for a whether an error occurs in the "try" statment. If yes, the catch statment is executed and prints a log or recent robot actions
     try{
       config = RobotConfig.fromGUISettings();
     } catch (Exception e) {
@@ -114,8 +120,8 @@ public class Swerve extends SubsystemBase {
       e.printStackTrace();
     }
 
-    // Configure AutoBuilder last
-    //Need to setup in FRC PathPlanner App (GUI) before you can deploy code to robot.  Navigate to Settings in app once you open Robot Project
+    // Yay, lambda statements, im not going to try writing any comments for this method
+    // Need to setup in FRC PathPlanner App (GUI) before you can deploy code to robot.  Navigate to Settings in app once you open Robot Project
     AutoBuilder.configure(
       this::getPose, // Robot pose supplier
       this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
@@ -140,8 +146,11 @@ public class Swerve extends SubsystemBase {
       this // Reference to this subsystem to set requirements
     );
   }
-
+  // Constructor ends
+  
+  // Drive method passig variables translation, rotation, and isOpenLoop
   public void drive(Translation2d translation, double rotation, /* boolean fieldRelative, */ boolean isOpenLoop) {
+    // Declares the array swerveModuleStates
     SwerveModuleState[] swerveModuleStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(
         ChassisSpeeds.fromFieldRelativeSpeeds(
             translation.getX(), translation.getY(), rotation, getRotation2d()));
@@ -151,7 +160,7 @@ public class Swerve extends SubsystemBase {
       mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
     }
   }
-
+  // Liam commenting ends here for now :0
   /*
    * Drive with field relative boolean
    * public void drive(
