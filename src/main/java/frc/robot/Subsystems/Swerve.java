@@ -1,9 +1,9 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// the WPILib BSD license file in the root directory of this project. 
 
 package frc.robot.Subsystems;
-//test commit
+
 import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
@@ -35,18 +35,19 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
-
+//swerve class. The entirety o0f this section.
 public class Swerve extends SubsystemBase {
+  //constructor, declares varibles used throughout Swerve Class
   private final AHRS m_gyro;
 
   private SwerveModule[] mSwerveMods;
   private SwerveDrivePoseEstimator swerveOdometry;
   public Field2d field;
   public RobotConfig config;
-
+  //Calls the vision class to get the field.
   public Vision photonVision = new Vision();
 
-
+  //constructor class
   public Swerve(Vision v) {
     this.photonVision = v;
     m_gyro = new AHRS(NavXComType.kMXP_SPI); // Check to make sure SPI switch is flicked "ON" on the NavX 
@@ -60,9 +61,9 @@ public class Swerve extends SubsystemBase {
     };
 
     Timer.delay(1.0);
-    resetModulesToAbsolute();
+    resetModulesToAbsolute(); // as it says, resets the swerve modules
 
-    field = new Field2d();
+    field = new Field2d(); //gets new view of the field
 
     var stateStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
     var visionStdDevs = VecBuilder.fill(0.01, 0.01, Units.degreesToRadians(10));
@@ -140,7 +141,7 @@ public class Swerve extends SubsystemBase {
       this // Reference to this subsystem to set requirements
     );
   }
-
+//messes with the module states. 
   public void drive(Translation2d translation, double rotation, /* boolean fieldRelative, */ boolean isOpenLoop) {
     SwerveModuleState[] swerveModuleStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(
         ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -180,7 +181,7 @@ public class Swerve extends SubsystemBase {
       mod.setDesiredState(desiredStates[mod.moduleNumber], false);
     }
   }
-
+  // the next two methods are for getting and reseting the serves pose
   public Pose2d getPose() {
     return swerveOdometry.getEstimatedPosition();// NO DECLARATION FOR SWERVEODOMETRY
   }
@@ -201,7 +202,7 @@ public class Swerve extends SubsystemBase {
     SwerveModuleState[] targetStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(targetSpeeds);
     setStates(targetStates);
   }
-
+//sets the swerve states
   public void setStates(SwerveModuleState[] targetStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, Constants.Swerve.maxSpeed);
 
@@ -222,7 +223,8 @@ public class Swerve extends SubsystemBase {
     }
     return states;
   }
-
+//the next four methods are for the heading. first for Zero Heading (CHECK WHAT THAT IS),
+//the second for adjusting the zero heading, the third one is for getting the heading that will be used, the fourth is for gyroscopes
   public void zeroHeading() {
     m_gyro.reset();
   }
