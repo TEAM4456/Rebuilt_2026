@@ -25,6 +25,8 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+
+// Imports from our code
 import frc.lib.configs.SwerveModuleConstants;
 import frc.lib.math.OnboardModuleState;
 import frc.robot.Constants;
@@ -34,20 +36,20 @@ import frc.robot.Robot;
 public class SwerveModule {
   
   // Class variables
-  public int moduleNumber;
-  private Rotation2d lastAngle;
+  public int moduleNumber; // Represents which of the fours robot modules it is
+  private Rotation2d lastAngle; // Represents which angle the motor is currently at
   private Rotation2d angleOffset;
 
-  private SparkMax driveMotor;
-  private RelativeEncoder driveEncoder;
-  private final SparkClosedLoopController driveController;
+  private SparkMax driveMotor; // Represents the drive motor of the swerve module
+  private RelativeEncoder driveEncoder; // Represents the encoder of the drive motor
+  private final SparkClosedLoopController driveController; // Represents the loop controller of the drive motor
   
-  private SparkMax turnMotor; //Changed the name from angleMotor to align with turnEncoder below
-  private RelativeEncoder turnEncoder; 
-  private final SparkClosedLoopController angleController;
+  private SparkMax turnMotor; // Represents the turn motor of the swerve module
+  private RelativeEncoder turnEncoder; // Represents the encoder of the turn motor
+  private final SparkClosedLoopController angleController; // Represents the loop controller of the turn motor
   
-  private SparkMaxConfig driveConfig;
-  private SparkMaxConfig turnConfig;
+  private SparkMaxConfig driveConfig; // Represents the config of the drive motor
+  private SparkMaxConfig turnConfig; // Represents the config of the turn motor
 
   private CANcoder absoluteEncoder; //Changed the name from angleEncoder to clarify the Absolute CANcoder
   // Loooong declaration statment, but this is still just a class variable
@@ -56,12 +58,10 @@ public class SwerveModule {
           Constants.Swerve.driveKS, Constants.Swerve.driveKV, Constants.Swerve.driveKA);
 
   // Class constructor passing variables moduleNumber and moduleConstants
-  public SwerveModule(int moduleNumber, SwerveModuleConstants moduleConstants) {
+  public SwerveModule(int modNum, SwerveModuleConstants moduleConstants) {
 
     // Class variables getting assigned values
-    
-    // AJ named this class variable and this constructor parameter the same name and used the "this" keyword to get around it
-    this.moduleNumber = moduleNumber;
+    moduleNumber = modNum;
     lastAngle = getState().angle;
     angleOffset = moduleConstants.angleOffset;
 
@@ -83,8 +83,13 @@ public class SwerveModule {
   }
   // End constructor
 
-  // Sets the desired state of the drive motors
-  
+  /** Sets the turn motor to the zero position based on its starting offset */
+  public void resetToAbsolute() {
+    double zeroPosition = (absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 360) - angleOffset.getDegrees(); //returns the zero position based on offset
+    turnEncoder.setPosition(zeroPosition); //Turns the wheels to the zero position based on the offset
+  }
+
+  /** Sets the swerve module turn and drive motors to a desired state */
   public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
     // Custom optimize command, since default WPILib optimize assumes continuous controller which
     // REV and CTRE are not
@@ -94,15 +99,10 @@ public class SwerveModule {
     setSpeed(desiredState, isOpenLoop);
   }
 
-  // Sets the turn wheels to the 0 position CONTINUE HERE
-  public void resetToAbsolute() {
-    double zeroPosition = (absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 360) - angleOffset.getDegrees(); //returns the zero position based on offset
-    turnEncoder.setPosition(zeroPosition); //Turns the wheels to the zero position based on the offset
-  }
-  // Liam comments end here
+  /** Sets the absolute encoder to a default configuration. Called during creation of a swerveModule object */
   private void configAbsoluteEncoder() {
     //absoluteEncoder.optimizeBusUtilization();
-    var canCoderConfig = new CANcoderConfiguration();
+    CANcoderConfiguration canCoderConfig = new CANcoderConfiguration();
 
     canCoderConfig.MagnetSensor = new MagnetSensorConfigs()
         .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive) 
@@ -128,6 +128,7 @@ public class SwerveModule {
   //   resetToAbsolute();
   // }
 
+  /** Sets the turn motor to a default configuration. Called during creation of a swerveModule object */
   private void configTurnMotor() {
     turnConfig = new SparkMaxConfig();
     turnConfig
@@ -163,6 +164,7 @@ public class SwerveModule {
   //   driveEncoder.setPosition(0.0);
   // }
 
+  /** Sets the drive motor to a default configuration. Called during creation of a swerveModule object */
   private void configDriveMotor() {
     driveConfig = new SparkMaxConfig();
     driveConfig
@@ -179,19 +181,21 @@ public class SwerveModule {
     driveMotor.configure(driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
+  /** Sets the speed of the drive motor in a swerve module */
   private void setSpeed(SwerveModuleState desiredState, boolean isOpenLoop) {
     if (isOpenLoop) {
       double percentOutput = desiredState.speedMetersPerSecond / Constants.Swerve.maxSpeed;
       driveMotor.set(percentOutput);
-    } else {
-      driveController.setReference(
-          desiredState.speedMetersPerSecond,
-          ControlType.kVelocity,
-          ClosedLoopSlot.kSlot0,
-          feedforward.calculate(desiredState.speedMetersPerSecond));
+    }
+    else {
+      driveController.setSetpoint(
+        desiredState.speedMetersPerSecond,
+        ControlType.kVelocity,
+        ClosedLoopSlot.kSlot0,
+        feedforward.calculate(desiredState.speedMetersPerSecond));
     }
   }
-
+  /** Sets the angle of the turn motor in a swerve module */
   private void setAngle(SwerveModuleState desiredState) {
     // Prevent rotating module if speed is less then 1%. Prevents jittering.
     Rotation2d angle =
@@ -202,22 +206,27 @@ public class SwerveModule {
     angleController.setReference(angle.getDegrees(), ControlType.kPosition);
     lastAngle = angle;
   }
-
+  /** Returns current angle of the turn motor in a swerve module */
   private Rotation2d getAngle() {
     return Rotation2d.fromDegrees(turnEncoder.getPosition());
   }
 
+  /** Returns the Can Coder angle reading in 360 degrees */
   public Rotation2d getCanCoder360() {
     return Rotation2d.fromDegrees((absoluteEncoder.getAbsolutePosition().getValueAsDouble()) * 360); //gets Cancoder value 0-1 as double * 360 for degrees
   }
+
+  /** Returns the Can Coder angle reading */
   public Rotation2d getCanCoder() {
     return Rotation2d.fromDegrees((absoluteEncoder.getAbsolutePosition().getValueAsDouble())); //gets Cancoder value 0-1 as double * 360 for degrees
   }
 
+  /** Returns the current state of the swerve module */
   public SwerveModuleState getState() {
     return new SwerveModuleState(driveEncoder.getVelocity(), getAngle());
   }
 
+  /** Returns the current position of the swerve module */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(driveEncoder.getPosition(), getAngle());
   }

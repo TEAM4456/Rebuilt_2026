@@ -2,23 +2,20 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-// ==== Liam's attempt to mark up this file. Pray for me! ====
+// ==== Liam has attempted to mark up this file. Pray for me! ====
+
+// Imports
 package frc.robot.Subsystems;
-//test commit
+
 import java.util.Optional;
-
 import org.photonvision.EstimatedRobotPose;
-
 import com.pathplanner.lib.auto.AutoBuilder;
-
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
-
 import edu.wpi.first.math.VecBuilder;
-
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -33,6 +30,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+
+// Imports from our code
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 
@@ -40,26 +39,31 @@ import frc.robot.Constants.FieldConstants;
 public class Swerve extends SubsystemBase {
   
   // Class variables
-  public Vision photonVision = new Vision();
-  private final AHRS m_gyro;
-  public Field2d field;
-  private SwerveModule[] mSwerveMods;
-  private SwerveDrivePoseEstimator swerveOdometry;
-  public RobotConfig config;
+  public Vision photonVision = new Vision(); // Represents the robot camera
+  private final AHRS m_gyro; //Represents the robot gyroscope, Check to make sure SPI switch is flicked "ON" on the NavX
+  public Field2d field; // Represents the compitition field
+  private SwerveModule[] mSwerveMods; // Represents an array of the individual swerve modules in each corner of the robot
+  private SwerveDrivePoseEstimator swerveOdometry; // Represents a combo of vision measurements and swerve drive velocity measurements
+  public RobotConfig config; // 
   
-  // Class constructor passing variable v
+  // Class constructor passing parameter "v"
   public Swerve(Vision v) {
 
-    // Class variable getting assigned values
-    this.photonVision = v;
-    m_gyro = new AHRS(NavXComType.kMXP_SPI); // Check to make sure SPI switch is flicked "ON" on the NavX
-    field = new Field2d();
-    mSwerveMods = new SwerveModule[] {
-        new SwerveModule(0, Constants.Swerve.Mod0.constants), // Module values pulled from out own Constants file
+    // Class variables getting assigned values
+    photonVision = v;
+    m_gyro = new AHRS(NavXComType.kMXP_SPI); 
+    field = new Field2d(); 
+    mSwerveMods = new SwerveModule[] { 
+        new SwerveModule(0, Constants.Swerve.Mod0.constants), // Module values are pulled from our own Constants file
         new SwerveModule(1, Constants.Swerve.Mod1.constants),
         new SwerveModule(2, Constants.Swerve.Mod2.constants),
         new SwerveModule(3, Constants.Swerve.Mod3.constants)
     };
+
+    // These variables are declared for the swerveOdometry assignment statment below, but I don't know what they do
+    var stateStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
+    var visionStdDevs = VecBuilder.fill(0.01, 0.01, Units.degreesToRadians(10));
+
     // FROM CLASS SwerveDrivePoseEstimator DAN_F
     swerveOdometry = new SwerveDrivePoseEstimator(
         // The formating looks strange, but these are being passed as attributes for the assignment of swerveOdometry
@@ -77,9 +81,6 @@ public class Swerve extends SubsystemBase {
     SmartDashboard.putData("Field", field);
     // .configFactoryDefault();    Sets somthing to the factory default, not sure what?
     
-    // These variables are being taken from the swerveOdometry assignment statment above, but I don't know what they do
-    var stateStdDevs = VecBuilder.fill(0.1, 0.1, Units.degreesToRadians(5));
-    var visionStdDevs = VecBuilder.fill(0.01, 0.01, Units.degreesToRadians(10));
     // info on how to set up the SwerveDrivePoseEstimator can be found here: file:///C:/Users/Public/wpilib/2025/documentation/java/edu/wpi/first/math/estimator/SwerveDrivePoseEstimator.html
 
     // This was here before, not going to bother trying to understand it
@@ -112,15 +113,15 @@ public class Swerve extends SubsystemBase {
     Load the RobotConfig from the GUI settings. You should probably store this in your Constants file
     */
 
-    // This is weird, but I think it tests for a whether an error occurs in the "try" statment. If yes, the catch statment is executed and prints a log or recent robot actions
+    // This is weird, but I think it tests for a whether an error occurs in the "try" statment. If yes, the catch statment is executed and prints a log of recent robot actions
     try{
       config = RobotConfig.fromGUISettings();
     } catch (Exception e) {
       // Handle exception as needed
       e.printStackTrace();
     }
-
-    // Yay, lambda statements, im not going to try writing any comments for this method
+    
+    // Yay, lambda statements, not going to try writing any comments for this method
     // Need to setup in FRC PathPlanner App (GUI) before you can deploy code to robot.  Navigate to Settings in app once you open Robot Project
     AutoBuilder.configure(
       this::getPose, // Robot pose supplier
@@ -137,7 +138,7 @@ public class Swerve extends SubsystemBase {
         // This will flip the path being followed to the red side of the field.
         // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-        var alliance = DriverStation.getAlliance();
+        var alliance = DriverStation.getAlliance(); // Represents which alliance we are
         if (alliance.isPresent()) {
           return alliance.get() == DriverStation.Alliance.Red;
         }
@@ -148,19 +149,22 @@ public class Swerve extends SubsystemBase {
   }
   // Constructor ends
   
-  // Drive method passig variables translation, rotation, and isOpenLoop
+  /** Drive method passing parameters "translation", "rotation", and "isOpenLoop".
+  * The method declares the array "swerveModuleStates" and sets its values to the result
+  * of some code I don't know why we preform at the momment */
   public void drive(Translation2d translation, double rotation, /* boolean fieldRelative, */ boolean isOpenLoop) {
-    // Declares the array swerveModuleStates
     SwerveModuleState[] swerveModuleStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(
         ChassisSpeeds.fromFieldRelativeSpeeds(
             translation.getX(), translation.getY(), rotation, getRotation2d()));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, Constants.Swerve.maxSpeed);
-
-    for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(swerveModuleStates[mod.moduleNumber], isOpenLoop);
+    
+    // A for each loop that sets the desired state of each swerve module on the robot
+    for (SwerveModule tempMod : mSwerveMods) {
+      tempMod.setDesiredState(swerveModuleStates[tempMod.moduleNumber], isOpenLoop);
     }
   }
-  // Liam commenting ends here for now :0
+
+  // Some commented code that was here before
   /*
    * Drive with field relative boolean
    * public void drive(
@@ -181,29 +185,35 @@ public class Swerve extends SubsystemBase {
    * }
    */
 
-  /* Used by SwerveControllerCommand in Auto */
+  /** setModuleStates passing array parameter "desiredStates"
+  * The method sets the moduleStates of each swerve module on the robot
+  * Used by SwerveControllerCommand in Auto */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.maxSpeed);
 
-    for (SwerveModule mod : mSwerveMods) {
-      mod.setDesiredState(desiredStates[mod.moduleNumber], false);
+    for (SwerveModule tempMod : mSwerveMods) {
+      tempMod.setDesiredState(desiredStates[tempMod.moduleNumber], false);
     }
   }
 
+  /** Returns the estimated pose of the robot */
   public Pose2d getPose() {
-    return swerveOdometry.getEstimatedPosition();// NO DECLARATION FOR SWERVEODOMETRY
+    return swerveOdometry.getEstimatedPosition();
   }
 
+  /** Sets the robot to a desired pose */
   public void resetPose(Pose2d pose) {
   swerveOdometry.resetPosition(getRotation2d(), getModulePositions(),
-  pose);//NO DECLARATION FOR SWERVEODOMETRY
+  pose);
   }
 
+  /** Returns the robot relative speeds */
   public ChassisSpeeds getRobotRelativeSpeeds() {
     ChassisSpeeds chassisSpeeds = Constants.Swerve.swerveKinematics.toChassisSpeeds(getStates());
     return chassisSpeeds;
   }
 
+  /** Sets the robot to the desired speed */
   public void driveRobotRelative(ChassisSpeeds speeds) {
     ChassisSpeeds targetSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 
@@ -211,6 +221,7 @@ public class Swerve extends SubsystemBase {
     setStates(targetStates);
   }
 
+  /** Sets each swerve module to a desired state */
   public void setStates(SwerveModuleState[] targetStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, Constants.Swerve.maxSpeed);
 
@@ -224,6 +235,7 @@ public class Swerve extends SubsystemBase {
   // pose);//NO DECLARATION FOR SWERVEODOMETRY
   // }
 
+  /** Returns an array of the states of the swerve modules */
   public SwerveModuleState[] getStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
     for (SwerveModule mod : mSwerveMods) {
@@ -232,14 +244,17 @@ public class Swerve extends SubsystemBase {
     return states;
   }
 
+  /** Sets the gyro heading to zero */
   public void zeroHeading() {
     m_gyro.reset();
   }
 
+  /** Apparently also sets the gyro heading to zero */
   public void zeroHeadingAdjust() {
     m_gyro.reset();
     m_gyro.setAngleAdjustment(0);
   }
+
   /*
    * I think this was added by AJ because he couldn't solve a problem with
    * pathplanner
@@ -249,10 +264,12 @@ public class Swerve extends SubsystemBase {
   // m_gyro.setAngleAdjustment(180);
   // }
 
+  /** Returns the current gyro z axis heading */
   public double getHeading() {
     return Math.IEEEremainder(-m_gyro.getAngle(), 360);
   }
 
+  /** Returns the current gyro rotation around the x axis*/
   public double getGyroRoll() {
     return m_gyro.getRoll();
   }
@@ -260,10 +277,13 @@ public class Swerve extends SubsystemBase {
   /*
    * TODO: Test this to see if it is giving correct values on SmartDashboard (called in periodic)
    * If incorrect values, try switching to the commented out code below this that calls from getHeading
-   */
+  */
+
+  /** Returns the gyro angle as a getRotation 2d object */
   public Rotation2d getRotation2d() {
     return m_gyro.getRotation2d();
   }
+
   /*
    * public Rotation2d getRotation2d() {
    * return Rotation2d.fromDegrees(getHeading());
@@ -278,6 +298,7 @@ public class Swerve extends SubsystemBase {
    * }
    */
 
+  /** Returns an array of the positions of each swerve module */
   public SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] positions = new SwerveModulePosition[4];
     for (SwerveModule mod : mSwerveMods) {
@@ -286,6 +307,7 @@ public class Swerve extends SubsystemBase {
     return positions;
   }
 
+  /** Turns each swerve module heading to 0, probably can get rid of this and make it directly use "resetToAbsolute" */
   public void resetModulesToAbsolute() {
     for (SwerveModule mod : mSwerveMods) {
       mod.resetToAbsolute();
@@ -323,7 +345,7 @@ public class Swerve extends SubsystemBase {
   }
   */
 
-  // check if the robot thinks it's outside the field, and move it back if it is
+  /** Checks if the robot thinks it's outside the field and moves it back within field boundraies if it is */
   private void keepOdometryOnField() {
     Pose2d pose = getPose();
     double x = pose.getX();
@@ -352,6 +374,7 @@ public class Swerve extends SubsystemBase {
     }
   }
 
+  // COMMENTING ON THIS METHOD IS NOT COMPLETE
   @Override
   public void periodic() {
     swerveOdometry.update(getRotation2d(), getModulePositions());
