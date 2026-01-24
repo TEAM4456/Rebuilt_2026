@@ -2,6 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+// Liam has decided to attempt to comment this file as well!
 package frc.robot.Subsystems;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -20,7 +21,6 @@ import com.revrobotics.spark.ClosedLoopSlot;
 //Possible redundant import: DO NOT DELETE. Check for instaces in other parts of code.
 //import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.spark.SparkClosedLoopController;
-
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -30,50 +30,61 @@ import frc.lib.math.OnboardModuleState;
 import frc.robot.Constants;
 import frc.robot.Robot;
 
+// Class declaration
 public class SwerveModule {
+  
+  // Class variables
   public int moduleNumber;
   private Rotation2d lastAngle;
   private Rotation2d angleOffset;
 
-  private SparkMax turnMotor; //Changed the name from angleMotor to align with turnEncoder below
   private SparkMax driveMotor;
-  private SparkMaxConfig turnConfig;
-  private SparkMaxConfig driveConfig;
-
   private RelativeEncoder driveEncoder;
-  private RelativeEncoder turnEncoder; 
-  private CANcoder absoluteEncoder; //Changed the name from angleEncoder to clarify the Absolute CANcoder
-
   private final SparkClosedLoopController driveController;
+  
+  private SparkMax turnMotor; //Changed the name from angleMotor to align with turnEncoder below
+  private RelativeEncoder turnEncoder; 
   private final SparkClosedLoopController angleController;
+  
+  private SparkMaxConfig driveConfig;
+  private SparkMaxConfig turnConfig;
 
+  private CANcoder absoluteEncoder; //Changed the name from angleEncoder to clarify the Absolute CANcoder
+  // Loooong declaration statment, but this is still just a class variable
   private final SimpleMotorFeedforward feedforward =
       new SimpleMotorFeedforward(
           Constants.Swerve.driveKS, Constants.Swerve.driveKV, Constants.Swerve.driveKA);
 
+  // Class constructor passing variables moduleNumber and moduleConstants
   public SwerveModule(int moduleNumber, SwerveModuleConstants moduleConstants) {
+
+    // Class variables getting assigned values
+    
+    // AJ named this class variable and this constructor parameter the same name and used the "this" keyword to get around it
     this.moduleNumber = moduleNumber;
+    lastAngle = getState().angle;
     angleOffset = moduleConstants.angleOffset;
 
     /* CANcoder (absolute angle) Encoder Config */
     absoluteEncoder = new CANcoder(moduleConstants.canCoderID);
     configAbsoluteEncoder();
 
-    /* Angle Motor Config */
-    turnMotor = new SparkMax(moduleConstants.angleMotorID, MotorType.kBrushless);
-    turnEncoder = turnMotor.getEncoder(); //This is the encoder for the angle motor
-    angleController = turnMotor.getClosedLoopController(); //This is the PID controller for the angle motor
-    configTurnMotor();
-
-    /* Drive Motor Config */
     driveMotor = new SparkMax(moduleConstants.driveMotorID, MotorType.kBrushless);
     driveEncoder = driveMotor.getEncoder();
     driveController = driveMotor.getClosedLoopController();
+    
+    turnMotor = new SparkMax(moduleConstants.angleMotorID, MotorType.kBrushless);
+    turnEncoder = turnMotor.getEncoder(); //This is the encoder for the angle motor
+    angleController = turnMotor.getClosedLoopController(); //This is the PID controller for the angle motor
+
+    // Methods that are run every time an object is created, NOT VARIABLES!!!!!
     configDriveMotor();
-
-    lastAngle = getState().angle;
+    configTurnMotor();
   }
+  // End constructor
 
+  // Sets the desired state of the drive motors
+  
   public void setDesiredState(SwerveModuleState desiredState, boolean isOpenLoop) {
     // Custom optimize command, since default WPILib optimize assumes continuous controller which
     // REV and CTRE are not
@@ -83,11 +94,12 @@ public class SwerveModule {
     setSpeed(desiredState, isOpenLoop);
   }
 
+  // Sets the turn wheels to the 0 position CONTINUE HERE
   public void resetToAbsolute() {
     double zeroPosition = (absoluteEncoder.getAbsolutePosition().getValueAsDouble() * 360) - angleOffset.getDegrees(); //returns the zero position based on offset
     turnEncoder.setPosition(zeroPosition); //Turns the wheels to the zero position based on the offset
   }
-
+  // Liam comments end here
   private void configAbsoluteEncoder() {
     //absoluteEncoder.optimizeBusUtilization();
     var canCoderConfig = new CANcoderConfiguration();
